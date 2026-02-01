@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر العضويات الحصرية - دفع آمن</title>
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script> 
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --std-color: #cd7f32; --pre-color: #c0c0c0; --ult-color: #ffd700;
+            --bg-dark: #0f0f0f; --card-bg: #1a1a1a;
+        }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg-dark); color: white; text-align: center; margin: 0; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 40px; }
+        .card {
+            background: var(--card-bg); border-radius: 15px; padding: 25px; width: 300px;
+            border: 1px solid #333; transition: 0.3s;
+        }
+        .card:hover { transform: scale(1.05); border-color: var(--ult-color); }
+        .price { font-size: 2rem; margin: 15px 0; color: #fff; }
+        .paypal-container { margin-top: 20px; min-height: 150px; }
+        
+        /* رسالة النجاح */
+        #success-msg {
+            display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #28a745; color: white; padding: 20px 40px; border-radius: 10px;
+            z-index: 2000; box-shadow: 0 0 20px rgba(0,0,0,0.5); font-weight: bold;
+        }
+
+        #notification-area { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .toast { background: #333; color: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-right: 5px solid var(--ult-color); animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="success-msg">✅ تم الدفع بنجاح! سيتم تفعيل اشتراكك وتثبيت الـ ID الخاص بك (بدءاً من 160) حالاً.</div>
+
+    <header style="padding-top: 50px;">
+        <h1>نظام العضويات الملكي 👑</h1>
+        <p>معرفات دائمة تبدأ من 160 ومواتر حصرية</p>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2 style="color: var(--std-color)">ستاندر</h2>
+            <div class="price">5 ريال</div>
+            <p>ID ثلاثي دائم + موتر لشهر</p>
+            <div id="paypal-button-std" class="paypal-container"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="color: var(--pre-color)">بريميوم</h2>
+            <div class="price">15 ريال</div>
+            <p>ID ثنائي دائم + موترين للأبد</p>
+            <div id="paypal-button-pre" class="paypal-container"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="color: var(--ult-color)">التمت</h2>
+            <div class="price">30 ريال</div>
+            <p>ID أحادي دائم + 5 مواتر للأبد</p>
+            <div id="paypal-button-ult" class="paypal-container"></div>
+        </div>
+    </div>
+
+    <div id="notification-area"></div>
+
+    <script>
+        // وظيفة إظهار رسالة النجاح والاشعار العام
+        function completeOrder(tier) {
+            document.getElementById('success-msg').style.display = 'block';
+            showGlobalNotification("أنت", tier);
+            setTimeout(() => { document.getElementById('success-msg').style.display = 'none'; }, 6000);
+        }
+
+        function showGlobalNotification(name, tier) {
+            const area = document.getElementById('notification-area');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `📢 <b>${name}</b> قام بشراء باقة <b>${tier}</b> الآن!`;
+            area.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // إعداد أزرار PayPal لكل باقة
+        const setupButton = (id, amount, tier) => {
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{ amount: { value: (amount / 3.75).toFixed(2) } }] // تحويل تقريبي للدولار
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        completeOrder(tier);
+                    });
+                },
+                onError: (err) => {
+                    alert("حدث خطأ في عملية الدفع، يرجى المحاولة مرة أخرى.");
+                }
+            }).render(id);
+        };
+
+        // تشغيل الأزرار
+        setupButton('#paypal-button-std', 5, 'ستاندر');
+        setupButton('#paypal-button-pre', 15, 'بريميوم');
+        setupButton('#paypal-button-ult', 30, 'التمت');
+    </script>
+</body>
+</html>
